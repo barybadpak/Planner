@@ -65,7 +65,6 @@
             border-radius: 16px; padding: 20px; text-align: center;
         }
 
-        /* Syringe Visualization */
         .syringe-container { position: relative; width: 100%; max-width: 340px; margin: 0 auto; }
         .syringe-body { position: relative; width: 80px; height: 260px; margin: 0 auto; background: linear-gradient(90deg, rgba(100,116,139,0.3), rgba(148,163,184,0.5) 30%, rgba(148,163,184,0.5) 70%, rgba(100,116,139,0.3)); border-radius: 6px; border: 2px solid rgba(148,163,184,0.6); overflow: hidden; }
         .syringe-fill { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(0deg, rgba(108,99,255,0.7), rgba(108,99,255,0.3)); transition: height 0.6s cubic-bezier(0.4,0,0.2,1); border-radius: 0 0 4px 4px; }
@@ -76,7 +75,6 @@
         .syringe-plunger { width: 60px; height: 8px; margin: 0 auto; background: linear-gradient(90deg, #718096, #a0aec0, #718096); border-radius: 3px; }
         .syringe-plunger-top { width: 30px; height: 4px; margin: 0 auto; background: #e2e8f0; border-radius: 2px; }
 
-        /* Tabs & Navigation */
         .tab-bar { display: flex; background: rgba(26,32,44,0.95); backdrop-filter: blur(20px); border-top: 1px solid rgba(108,99,255,0.15); position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; padding-bottom: env(safe-area-inset-bottom); }
         .tab-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px 4px 10px; cursor: pointer; transition: all 0.3s ease; border: none; background: transparent; color: #718096; font-size: 10px; font-weight: 500; gap: 2px; }
         .tab-item.active { color: #6C63FF; }
@@ -89,6 +87,19 @@
 
         .badge { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 600; }
         .badge-purple { background: rgba(108,99,255,0.15); color: #8B83FF; }
+
+        /* Chart Styles */
+        .chart-container { width: 100%; height: 220px; position: relative; margin-top: 10px; }
+        .chart-svg { width: 100%; height: 100%; overflow: visible; }
+        .trend-line { fill: none; stroke: #6C63FF; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 4px rgba(108,99,255,0.4)); }
+        .trend-point { fill: #e2e8f0; stroke: #6C63FF; stroke-width: 2; r: 4; transition: all 0.2s ease; }
+        .chart-grid { stroke: rgba(108,99,255,0.1); stroke-dasharray: 4,4; }
+        .chart-label { fill: #a0aec0; font-size: 10px; font-family: Inter, sans-serif; }
+
+        /* Log Item */
+        .log-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(26,32,44,0.5); border-radius: 12px; margin-bottom: 8px; border-left: 3px solid #718096; }
+        .log-item.positive { border-left-color: #F87171; }
+        .log-item.negative { border-left-color: #4ADE80; }
     </style>
 </head>
 <body class="scroll-smooth">
@@ -97,37 +108,33 @@
     <header class="fixed top-0 left-0 right-0 z-40 bg-dark-950/90 backdrop-blur-xl border-b border-accent/10" style="padding-top: env(safe-area-inset-top);">
         <div class="max-w-[430px] mx-auto px-4 py-3 flex items-center justify-between">
             <div>
-                <h1 class="text-lg font-bold text-white glow-text tracking-tight">💉 Peptide Planner</h1>
-                <p class="text-[10px] text-dark-400 font-medium tracking-wide uppercase">Dosis · Schema · Ratio</p>
+                <h1 class="text-lg font-bold text-white tracking-tight">💉 Peptide Planner</h1>
+                <p class="text-[10px] text-dark-400 font-medium tracking-wide uppercase">Dosis · Schema · Gewicht</p>
             </div>
-            <div class="badge badge-purple">v2.2 Pro</div>
+            <div class="badge badge-purple">v2.3 Pro</div>
         </div>
     </header>
 
-    <!-- ==================== SECTIE 1: CALCULATOR (GEUPDATET) ==================== -->
+    <!-- ==================== SECTIE 1: CALCULATOR ==================== -->
     <section id="sec-calculator" class="section active">
         <h2 class="text-xl font-bold text-white mb-1 mt-4">🧪 Dosis Calculator</h2>
         <p class="text-sm text-dark-400 mb-6">Bereken injectie-eenheden & waterhoeveelheid</p>
 
-        <!-- Inputs -->
         <div class="glass-card p-5 space-y-4 mb-5">
             <label class="block">
                 <span class="text-xs font-semibold text-dark-300 uppercase tracking-wider block mb-2">Peptide in vial (mg)</span>
                 <input type="number" id="peptide-mg" class="input-field" placeholder="Bijv. 15" step="any" inputmode="decimal" oninput="calculate()">
             </label>
 
-            <!-- Smart Dose Input -->
             <div class="glass-card bg-dark-800/50 p-3 border-dashed border border-accent/30">
                 <label class="block relative">
                     <span class="text-xs font-semibold text-info uppercase tracking-wider block mb-2 flex items-center gap-2">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
                         Gewenste Dosering per Injectie
                     </span>
-                    
                     <div class="grid grid-cols-[1fr_auto] gap-2">
                         <input type="number" id="dose-value" class="input-field py-3" placeholder="Bijv. 3,5" step="any" inputmode="decimal" oninput="calculate()">
                         <div class="flex items-end pb-[7px]">
-                            <!-- MG is nu standaard -->
                             <select id="dose-unit" class="input-field text-center py-3 px-1" onchange="calculate()" style="width:60px;">
                                 <option value="mg" selected>mg</option>
                                 <option value="mcg">mcg</option>
@@ -137,16 +144,14 @@
                 </label>
             </div>
 
-            <!-- Nieuw: Aantal Doseringen Invoer -->
              <label class="block">
                 <span class="text-xs font-semibold text-dark-300 uppercase tracking-wider block mb-2 flex items-center justify-between">
                     <span>🎯 Gewenste aantal doses uit vial</span>
                     <span class="text-[9px] bg-accent/20 px-2 py-0.5 rounded text-accent-light">Optioneel</span>
                 </span>
-                <input type="number" id="target-count" class="input-field" placeholder="Bijv. 4 (rekent water uit voor exact deze hoeveelheid)" step="1" inputmode="numeric" oninput="calculate()">
+                <input type="number" id="target-count" class="input-field" placeholder="Bijv. 4" step="1" inputmode="numeric" oninput="calculate()">
             </label>
 
-            <!-- Handmatig Water -->
             <div class="pt-2 border-t border-dark-700/50">
                 <label class="block">
                     <span class="text-xs font-semibold text-dark-400 uppercase tracking-wider block mb-2">Toegevoegd water (ml) <span class="normal-case italic opacity-60">(handmatig)</span></span>
@@ -155,7 +160,6 @@
             </div>
         </div>
 
-        <!-- Resultaat: Aantal Doseringen -->
         <div id="total-doses-box" class="glass-card p-5 mb-4 hidden border-l-4 border-l-success">
             <div class="flex justify-between items-center">
                 <div>
@@ -163,29 +167,23 @@
                     <h3 class="text-sm text-white mt-1">Aantal doses uit deze vial:</h3>
                 </div>
                 <div class="text-right">
-                    <span id="total-doses-val" class="text-4xl font-extrabold text-success glow-text"></span>
+                    <span id="total-doses-val" class="text-4xl font-extrabold text-success"></span>
                     <p class="text-[10px] text-dark-400 uppercase tracking-wider">Injecties</p>
                 </div>
             </div>
         </div>
 
-        <!-- Resultaat: Spuit & Water Advies -->
         <div id="result-box" class="glass-card p-6 mb-5 hidden">
-            
-            <!-- Slim water advies (als er geen handmatig water is ingevoerd) -->
             <div id="smart-water-advice" class="mb-4 p-3 rounded-lg bg-blue-900/20 border border-info/30 text-center hidden">
                 <p class="text-xs font-semibold text-info uppercase tracking-wider mb-1">💧 Adviseerde Waterhoeveelheid</p>
                 <p class="text-sm text-white leading-relaxed">Voeg <strong id="suggested-water-val" class="text-lg text-info"></strong> toe aan de vial.</p>
-                <p class="text-[10px] text-dark-400 mt-1">Hierdoor kun je precies 1ml (100 units) op trekken voor één volledige injectie.</p>
             </div>
 
-             <!-- Slim water advies (als er een target count is ingevoerd) -->
              <div id="count-advice" class="mb-4 p-3 rounded-lg bg-purple-900/20 border border-accent/30 text-center hidden">
                 <p class="text-xs font-semibold text-accent-light uppercase tracking-wider mb-1">🎯 Op basis van jouw doel</p>
-                <p class="text-sm text-white leading-relaxed">Om precies <strong id="count-target-val" class="font-bold"></strong> doses te halen uit deze vial, moet je <strong id="suggested-water-count-val" class="text-lg text-accent-light"></strong> water toevoegen.</p>
+                <p class="text-sm text-white leading-relaxed">Om precies <strong id="count-target-val" class="font-bold"></strong> doses te halen, voeg <strong id="suggested-water-count-val" class="text-lg text-accent-light"></strong> water toe.</p>
             </div>
 
-            <!-- Spuit weergave -->
             <div class="text-center mb-2">
                 <p class="text-xs font-semibold text-dark-400 uppercase tracking-wider mb-1">Op te trekken op spuit</p>
                 <div class="result-box inline-block px-8 py-3">
@@ -194,11 +192,8 @@
                 </div>
             </div>
 
-            <!-- Syringe visual -->
             <div class="syringe-container mt-6 mb-2">
-                <div class="syringe-plunger-top"></div>
-                <div class="syringe-plunger"></div>
-                <div class="syringe-needle"></div>
+                <div class="syringe-plunger-top"></div><div class="syringe-plunger"></div><div class="syringe-needle"></div>
                 <div class="syringe-body" id="syringe-body">
                     <div class="syringe-fill" id="syringe-fill" style="height: 0%"></div>
                     <div class="syringe-markings">
@@ -208,16 +203,14 @@
                     </div>
                 </div>
             </div>
-            
             <p id="concentration-info" class="text-center text-xs text-dark-500 mt-4"></p>
         </div>
     </section>
 
-    <!-- ==================== SECTIE 2: REFERENTIES (Kort gehouden) ==================== -->
+    <!-- ==================== SECTIE 2: REFERENTIES ==================== -->
     <section id="sec-references" class="section">
         <h2 class="text-xl font-bold text-white mb-1 mt-4">📊 Referenties</h2>
         <p class="text-sm text-dark-400 mb-6">Standaard doseringen & studies</p>
-
         <div class="glass-card p-5 mb-5">
             <label class="block">
                 <span class="text-xs font-semibold text-dark-300 uppercase tracking-wider block mb-2">Peptide selecteren</span>
@@ -229,37 +222,42 @@
                 </select>
             </label>
         </div>
-
         <div id="peptide-info" class="hidden space-y-4">
             <div class="glass-card p-5">
                 <h3 id="pi-name" class="text-lg font-bold text-white mb-1"></h3>
                 <p id="pi-desc" class="text-sm text-dark-300 leading-relaxed mb-4"></p>
-                <button onclick="autoFillCalculator()" class="btn-primary flex items-center justify-center gap-2">
-                    Vul calculator in met startdosis
-                </button>
+                <button onclick="autoFillCalculator()" class="btn-primary flex items-center justify-center gap-2">Vul calculator in met startdosis</button>
             </div>
         </div>
-
-        <div id="empty-state" class="glass-card p-8 text-center">
-            <p class="text-sm text-dark-400">Selecteer een peptide uit de lijst hierboven.</p>
-        </div>
+        <div id="empty-state" class="glass-card p-8 text-center"><p class="text-sm text-dark-400">Selecteer een peptide uit de lijst hierboven.</p></div>
     </section>
 
-    <!-- ==================== SECTIE 3: AGENDA (Kort gehouden) ==================== -->
+    <!-- ==================== SECTIE 3: AGENDA (FIXED) ==================== -->
     <section id="sec-agenda" class="section">
         <h2 class="text-xl font-bold text-white mb-1 mt-4">📅 Agenda Planner</h2>
-        <p class="text-sm text-dark-400 mb-6">Genereer herinneringen</p>
+        <p class="text-sm text-dark-400 mb-6">Genereer herinneringen & download .ics</p>
 
         <div class="glass-card p-5 space-y-4 mb-5">
             <input type="text" id="cal-name" class="input-field" placeholder="Peptide naam (bijv. Semaglutide)" oninput="generateAgenda()">
             <input type="number" id="cal-dose" class="input-field" placeholder="Dosis in mg" step="any" inputmode="decimal" oninput="generateAgenda()">
             
             <div class="grid grid-cols-2 gap-3">
-                <input type="date" id="cal-date" class="input-field" oninput="generateAgenda()">
-                <select id="cal-count" class="input-field" onchange="generateAgenda()">
-                    <option value="12">12 weken</option>
-                    <option value="26">26 weken</option>
-                </select>
+                <label class="block">
+                    <span class="text-[10px] text-dark-400 mb-1 block">Startdatum</span>
+                    <input type="date" id="cal-date" class="input-field py-2" oninput="generateAgenda()">
+                </label>
+                <div class="grid grid-cols-2 gap-2">
+                     <select id="cal-freq" class="input-field py-2 text-xs" onchange="generateAgenda()">
+                        <option value="7">Elke week</option>
+                        <option value="14">Om de 2 weken</option>
+                        <option value="30">Maandelijks</option>
+                    </select>
+                    <select id="cal-count" class="input-field py-2 text-xs" onchange="generateAgenda()">
+                        <option value="4">4x</option>
+                        <option value="8">8x</option>
+                        <option value="12" selected>12x</option>
+                    </select>
+                </div>
             </div>
 
             <button onclick="downloadICS()" id="ics-btn" class="btn-primary flex items-center justify-center gap-3 mt-4 hidden">
@@ -268,70 +266,71 @@
         </div>
     </section>
 
-    <!-- ==================== SECTIE 4: VERHOUDING CALCULATOR (NIEUW) ==================== -->
+    <!-- ==================== SECTIE 4: RATIO ==================== -->
     <section id="sec-ratio" class="section">
         <h2 class="text-xl font-bold text-white mb-1 mt-4">⚗️ Verhouding Calculator</h2>
         <p class="text-sm text-dark-400 mb-6">Bereken concentraties (mg/ml)</p>
-
-        <!-- Scenario A: Concentratie berekenen -->
         <div class="glass-card p-5 mb-5">
             <h3 class="text-sm font-semibold text-white mb-4 border-b border-dark-700 pb-2">Scenario 1: Wat is mijn concentratie?</h3>
-            
-            <label class="block mb-3">
-                <span class="text-xs font-semibold text-dark-300 uppercase tracking-wider block mb-1">Hoeveelheid Peptide (mg)</span>
-                <input type="number" id="ratio-mg" class="input-field py-2" placeholder="Bijv. 5" step="any" inputmode="decimal" oninput="calculateRatio()">
-            </label>
+            <label class="block mb-3"><span class="text-xs font-semibold text-dark-300 uppercase tracking-wider block mb-1">Hoeveelheid Peptide (mg)</span><input type="number" id="ratio-mg" class="input-field py-2" placeholder="Bijv. 5" step="any" inputmode="decimal" oninput="calculateRatio()"></label>
+            <label class="block mb-3"><span class="text-xs font-semibold text-dark-300 uppercase tracking-wider block mb-1">Hoeveelheid Water (ml)</span><input type="number" id="ratio-ml" class="input-field py-2" placeholder="Bijv. 2" step="any" inputmode="decimal" oninput="calculateRatio()"></label>
+            <div id="ratio-result-box" class="result-box hidden"><p class="text-xs text-dark-400 uppercase tracking-wider mb-1">Je Concentratie</p><span id="ratio-conc-val" class="text-3xl font-bold text-accent-light"></span> mg/ml</div>
+        </div>
+        <div class="glass-card p-5 mb-5">
+            <h3 class="text-sm font-semibold text-white mb-4 border-b border-dark-700 pb-2">Scenario 2: Hoeveel water nodig?</h3>
+            <label class="block mb-3"><span class="text-xs font-semibold text-dark-300 uppercase tracking-wider block mb-1">Hoeveelheid Peptide (mg)</span><input type="number" id="target-mg" class="input-field py-2" placeholder="Bijv. 5" step="any" inputmode="decimal" oninput="calculateReverseRatio()"></label>
+            <label class="block mb-3"><span class="text-xs font-semibold text-dark-300 uppercase tracking-wider block mb-1">Gewenste Concentratie (mg/ml)</span><input type="number" id="target-conc" class="input-field py-2" placeholder="Bijv. 2 mg/ml" step="any" inputmode="decimal" oninput="calculateReverseRatio()"></label>
+             <div id="reverse-result-box" class="result-box hidden border-info bg-blue-900/10"><p class="text-xs text-dark-400 uppercase tracking-wider mb-1">Benodigd Water</p><span id="target-water-val" class="text-3xl font-bold text-info"></span> ml</div>
+        </div>
+    </section>
 
-            <label class="block mb-3">
-                <span class="text-xs font-semibold text-dark-300 uppercase tracking-wider block mb-1">Hoeveelheid Water (ml)</span>
-                <input type="number" id="ratio-ml" class="input-field py-2" placeholder="Bijv. 2" step="any" inputmode="decimal" oninput="calculateRatio()">
-            </label>
+    <!-- ==================== SECTIE 5: GEWICHT TRACKER (NIEUW) ==================== -->
+    <section id="sec-weight" class="section">
+        <h2 class="text-xl font-bold text-white mb-1 mt-4">⚖️ Gewichtstracker</h2>
+        <p class="text-sm text-dark-400 mb-6">Log je gewicht & volg je voortgang</p>
 
-            <div id="ratio-result-box" class="result-box hidden">
-                <p class="text-xs text-dark-400 uppercase tracking-wider mb-1">Je Concentratie</p>
-                <span id="ratio-conc-val" class="text-3xl font-bold text-accent-light"></span> mg/ml
+        <!-- Log Form -->
+        <div class="glass-card p-5 mb-5">
+            <label class="block mb-3">
+                <span class="text-xs font-semibold text-dark-300 uppercase tracking-wider block mb-1">Huidig Gewicht (kg)</span>
+                <input type="number" id="weight-input" class="input-field py-3" placeholder="Bijv. 85,4" step="any" inputmode="decimal">
+            </label>
+            <button onclick="logWeight()" class="btn-primary flex items-center justify-center gap-2">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+                Log Gewicht & Datum/Tijd
+            </button>
+        </div>
+
+        <!-- Trend Chart -->
+        <div class="glass-card p-5 mb-5">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-sm font-semibold text-white">📈 Gewichtstrend</h3>
+                <span id="trend-indicator" class="badge badge-purple hidden"></span>
+            </div>
+            <div class="chart-container bg-dark-800/50 rounded-lg border border-dark-700">
+                <svg id="weight-chart" class="chart-svg" viewBox="0 0 300 200" preserveAspectRatio="none"></svg>
             </div>
         </div>
 
-        <!-- Scenario B: Water berekenen voor specifieke concentratie -->
+        <!-- Log List & Export -->
         <div class="glass-card p-5 mb-5">
-            <h3 class="text-sm font-semibold text-white mb-4 border-b border-dark-700 pb-2">Scenario 2: Hoeveel water nodig?</h3>
+            <h3 class="text-sm font-semibold text-white mb-3">📋 Recente Metingen</h3>
+            <div id="weight-log-list" class="space-y-2 max-h-60 overflow-y-auto pr-1"></div>
             
-            <label class="block mb-3">
-                <span class="text-xs font-semibold text-dark-300 uppercase tracking-wider block mb-1">Hoeveelheid Peptide (mg)</span>
-                <input type="number" id="target-mg" class="input-field py-2" placeholder="Bijv. 5" step="any" inputmode="decimal" oninput="calculateReverseRatio()">
-            </label>
-
-            <label class="block mb-3">
-                <span class="text-xs font-semibold text-dark-300 uppercase tracking-wider block mb-1">Gewenste Concentratie (mg/ml)</span>
-                <input type="number" id="target-conc" class="input-field py-2" placeholder="Bijv. 2 mg/ml" step="any" inputmode="decimal" oninput="calculateReverseRatio()">
-            </label>
-
-             <div id="reverse-result-box" class="result-box hidden border-info bg-blue-900/10">
-                <p class="text-xs text-dark-400 uppercase tracking-wider mb-1">Benodigd Water</p>
-                <span id="target-water-val" class="text-3xl font-bold text-info"></span> ml
+            <div class="grid grid-cols-2 gap-3 mt-4">
+                <button onclick="copyWeightTable()" class="btn-secondary flex items-center justify-center gap-2 text-xs py-2">📋 Kopieer Tabel</button>
+                <button onclick="downloadWeightTxt()" class="btn-primary bg-dark-700 hover:bg-dark-600 flex items-center justify-center gap-2 text-xs py-2">💾 Download .txt</button>
             </div>
         </div>
     </section>
 
     <!-- ==================== TAB BAR ==================== -->
     <nav class="tab-bar">
-        <button class="tab-item active" onclick="switchTab('calculator')" id="tab-calculator">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="2" width="16" height="20" rx="3"/><line x1="8" y1="6" x2="16" y2="6"/></svg>
-            <span>Calculator</span>
-        </button>
-        <button class="tab-item" onclick="switchTab('references')" id="tab-references">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
-            <span>Referenties</span>
-        </button>
-        <button class="tab-item" onclick="switchTab('agenda')" id="tab-agenda">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/></svg>
-            <span>Agenda</span>
-        </button>
-        <button class="tab-item" onclick="switchTab('ratio')" id="tab-ratio">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 3v18M15 3v18"/><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
-            <span>Ratio</span>
-        </button>
+        <button class="tab-item active" onclick="switchTab('calculator')" id="tab-calculator"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="2" width="16" height="20" rx="3"/><line x1="8" y1="6" x2="16" y2="6"/></svg><span>Calculator</span></button>
+        <button class="tab-item" onclick="switchTab('references')" id="tab-references"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg><span>Referenties</span></button>
+        <button class="tab-item" onclick="switchTab('agenda')" id="tab-agenda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/></svg><span>Agenda</span></button>
+        <button class="tab-item" onclick="switchTab('ratio')" id="tab-ratio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 3v18M15 3v18"/><rect x="6" y="6" width="12" height="12" rx="2"/></svg><span>Ratio</span></button>
+        <button class="tab-item" onclick="switchTab('weight')" id="tab-weight"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v18M5 10l7-7 7 7"/><circle cx="12" cy="16" r="3"/></svg><span>Gewicht</span></button>
     </nav>
 
     <!-- ==================== JAVASCRIPT LOGICA ==================== -->
@@ -342,9 +341,10 @@
             document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
             document.getElementById('sec-' + tab).classList.add('active');
             document.getElementById('tab-' + tab).classList.add('active');
+            if(tab === 'weight') renderWeightTracker();
         }
 
-        // ========== PEPTIDE DATABASE (Kort) ==========
+        // ========== PEPTIDE DATABASE ==========
         const peptideDB = {
             semaglutide: { name: "Semaglutide", desc: "Start 0.25 mg/week, opbouwen naar 1.0 of 2.4 mg.", doseMg: 0.25 },
             tirzepatide: { name: "Tirzepatide", desc: "Start 2.5 mg/week, opbouwen naar 15 mg.", doseMg: 2.5 },
@@ -353,11 +353,7 @@
 
         function loadPeptide() {
             const key = document.getElementById('peptide-select').value;
-            if (!key) {
-                document.getElementById('peptide-info').classList.add('hidden');
-                document.getElementById('empty-state').classList.remove('hidden');
-                return;
-            }
+            if (!key) { document.getElementById('peptide-info').classList.add('hidden'); document.getElementById('empty-state').classList.remove('hidden'); return; }
             const p = peptideDB[key];
             document.getElementById('empty-state').classList.add('hidden');
             document.getElementById('peptide-info').classList.remove('hidden');
@@ -369,13 +365,12 @@
             const key = document.getElementById('peptide-select').value;
             if (!key) return;
             switchTab('calculator');
-            // Stel standaard 15mg vial in voor demo, en de startdosis
             document.getElementById('dose-value').value = peptideDB[key].doseMg;
             document.getElementById('dose-unit').value = 'mg';
             calculate();
         }
 
-        // ========== CALCULATOR LOGICA (GEUPDATET) ==========
+        // ========== CALCULATOR LOGICA ==========
         function calculate() {
             const mg = parseFloat(document.getElementById('peptide-mg').value);
             let doseVal = parseFloat(document.getElementById('dose-value').value);
@@ -384,8 +379,6 @@
             const targetCount = parseFloat(document.getElementById('target-count').value);
 
             if (!mg || isNaN(doseVal) || mg <= 0) return;
-
-            // Converteer dose naar MG voor interne berekening
             let doseMg = (unit === 'mcg') ? doseVal / 1000 : doseVal; 
 
             const totalDosesBox = document.getElementById('total-doses-box');
@@ -393,104 +386,52 @@
             const smartAdvice = document.getElementById('smart-water-advice');
             const countAdvice = document.getElementById('count-advice');
             
-            let calculatedWater = 0;
             let unitsToDraw = 0;
 
-            // SCENARIO A: Handmatig water ingevoerd (Standaard berekening)
             if (!isNaN(manualWater) && manualWater > 0) {
-                smartAdvice.classList.add('hidden');
-                countAdvice.classList.add('hidden');
-                
-                const conc = mg / manualWater; // mg per ml
-                const doseVolumeMl = doseMg / conc; // ml nodig voor deze dosis
-                unitsToDraw = doseVolumeMl * 100; // Insuline spuit (1ml=100U)
-
+                smartAdvice.classList.add('hidden'); countAdvice.classList.add('hidden');
+                const conc = mg / manualWater; 
+                const doseVolumeMl = doseMg / conc; 
+                unitsToDraw = doseVolumeMl * 100;
                 updateResults(unitsToDraw, Math.floor(mg / doseMg), `${conc.toFixed(2)} mg/ml`);
-            } 
-            else {
-                // SCENARIO B: Slimme berekening gebaseerd op "Aantal Doses" doel
-                if (!isNaN(targetCount) && targetCount > 0) {
-                    smartAdvice.classList.add('hidden');
-                    countAdvice.classList.remove('hidden');
-
-                    // Als ik 4 doses wil uit een vial van 15mg:
-                    // Dan is elke dosis = 3.75 mg.
-                    // Om makkelijk af te lezen (1ml), moet concentratie = 3.75 mg/ml zijn.
-                    // Water nodig = Totaal Mg / Dosis per injectie
-                    
-                    const dosePerVial = mg / targetCount; 
-                    const neededWater = mg / dosePerVial; // Resulteert in 1ml volume per dosis
-
-                    calculatedWater = neededWater;
-                    unitsToDraw = 100; // Want we optimaliseren voor 1ml
-
-                    document.getElementById('count-target-val').textContent = targetCount + " doses";
-                    document.getElementById('suggested-water-count-val').textContent = neededWater.toFixed(2) + " ml";
-                    
-                    updateResults(unitsToDraw, targetCount, `${dosePerVial.toFixed(2)} mg/ml (Optimaliseerd)`);
-                } 
-                // SCENARIO C: Standaard Slimme Berekening (1 Dosis = 1ml)
-                else {
-                    smartAdvice.classList.remove('hidden');
-                    countAdvice.classList.add('hidden');
-
-                    // We willen dat de ingestelde dosis precies 1ml is.
-                    // Water nodig = Totaal Mg / Ingevoerde Dosis in mg
-                    const neededWater = mg / doseMg; 
-                    
-                    calculatedWater = neededWater;
-                    unitsToDraw = 100;
-
-                    document.getElementById('suggested-water-val').textContent = neededWater.toFixed(2) + " ml";
-                    
-                    updateResults(unitsToDraw, Math.floor(mg / doseMg), `${doseMg.toFixed(3)} mg/ml (Optimaliseerd)`);
-                }
+            } else if (!isNaN(targetCount) && targetCount > 0) {
+                smartAdvice.classList.add('hidden'); countAdvice.classList.remove('hidden');
+                const dosePerVial = mg / targetCount; 
+                const neededWater = mg / dosePerVial;
+                unitsToDraw = 100;
+                document.getElementById('count-target-val').textContent = targetCount + " doses";
+                document.getElementById('suggested-water-count-val').textContent = neededWater.toFixed(2) + " ml";
+                updateResults(unitsToDraw, targetCount, `${dosePerVial.toFixed(2)} mg/ml (Optimaliseerd)`);
+            } else {
+                smartAdvice.classList.remove('hidden'); countAdvice.classList.add('hidden');
+                const neededWater = mg / doseMg; 
+                unitsToDraw = 100;
+                document.getElementById('suggested-water-val').textContent = neededWater.toFixed(2) + " ml";
+                updateResults(unitsToDraw, Math.floor(mg / doseMg), `${doseMg.toFixed(3)} mg/ml (Optimaliseerd)`);
             }
         }
 
         function updateResults(units, totalDoses, concText) {
             document.getElementById('result-box').classList.remove('hidden');
             document.getElementById('total-doses-box').classList.remove('hidden');
-            
-            // Syringe Visual (cap op 100%)
             const fillPercent = Math.min((units / 100) * 100, 100);
             document.getElementById('syringe-fill').style.height = fillPercent + '%';
-
-            // Numbers
             document.getElementById('units-result').textContent = units.toFixed(1);
             document.getElementById('total-doses-val').textContent = totalDoses;
             document.getElementById('concentration-info').textContent = "Concentratie: " + concText;
         }
 
-
-        // ========== RATIO CALCULATOR LOGICA ==========
+        // ========== RATIO CALCULATOR ==========
         function calculateRatio() {
-            const mg = parseFloat(document.getElementById('ratio-mg').value);
-            const ml = parseFloat(document.getElementById('ratio-ml').value);
-
-            if(mg && ml) {
-                const conc = mg / ml;
-                document.getElementById('ratio-result-box').classList.remove('hidden');
-                document.getElementById('ratio-conc-val').textContent = conc.toFixed(2);
-            } else {
-                document.getElementById('ratio-result-box').classList.add('hidden');
-            }
+            const mg = parseFloat(document.getElementById('ratio-mg').value); const ml = parseFloat(document.getElementById('ratio-ml').value);
+            if(mg && ml) { document.getElementById('ratio-result-box').classList.remove('hidden'); document.getElementById('ratio-conc-val').textContent = (mg/ml).toFixed(2); } else document.getElementById('ratio-result-box').classList.add('hidden');
         }
-
         function calculateReverseRatio() {
-            const mg = parseFloat(document.getElementById('target-mg').value);
-            const conc = parseFloat(document.getElementById('target-conc').value);
-
-            if(mg && conc) {
-                const ml = mg / conc;
-                document.getElementById('reverse-result-box').classList.remove('hidden');
-                document.getElementById('target-water-val').textContent = ml.toFixed(2);
-            } else {
-                document.getElementById('reverse-result-box').classList.add('hidden');
-            }
+            const mg = parseFloat(document.getElementById('target-mg').value); const conc = parseFloat(document.getElementById('target-conc').value);
+            if(mg && conc) { document.getElementById('reverse-result-box').classList.remove('hidden'); document.getElementById('target-water-val').textContent = (mg/conc).toFixed(2); } else document.getElementById('reverse-result-box').classList.add('hidden');
         }
 
-        // ========== AGENDA LOGICA (Kort) ==========
+        // ========== AGENDA LOGICA (FIXED DATES) ==========
         function generateAgenda() {
              const name = document.getElementById('cal-name').value;
              if(name) document.getElementById('ics-btn').classList.remove('hidden');
@@ -498,18 +439,202 @@
 
         function downloadICS() {
             const name = document.getElementById('cal-name').value || "Injectie";
-            let ics = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//PeptidePlanner//NL\n`;
-            // Simpele dummy event voor demo (in volledige versie zou hier een loop staan)
-            ics += `BEGIN:VEVENT\nSUMMARY:${name}\nDTSTART;TZID=Europe/Amsterdam:20231027T090000\nEND:VEVENT\n`;
+            const dose = document.getElementById('cal-dose').value || "";
+            const startDateStr = document.getElementById('cal-date').value;
+            const freqDays = parseInt(document.getElementById('cal-freq').value);
+            const count = parseInt(document.getElementById('cal-count').value);
+
+            if(!startDateStr) { alert("Selecteer eerst een startdatum."); return; }
+
+            let ics = `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//PeptidePlanner//NL\r\nCALSCALE:GREGORIAN\r\nMETHOD:PUBLISH\r\n`;
+            
+            const startDate = new Date(startDateStr);
+            for(let i=0; i<count; i++) {
+                const d = new Date(startDate.getTime() + i * freqDays * 24*60*60*1000);
+                // Format: YYYYMMDDTHHMMSS
+                const y = d.getFullYear();
+                const m = String(d.getMonth()+1).padStart(2,'0');
+                const dy = String(d.getDate()).padStart(2,'0');
+                const dtStamp = `${y}${m}${dy}T090000`; // 09:00 AM default
+                
+                ics += `BEGIN:VEVENT\r\n`;
+                ics += `UID:${name}-${i}@peptideplanner.nl\r\n`;
+                ics += `DTSTAMP;VALUE=DATE-TIME:${dtStamp}\r\n`;
+                ics += `DTSTART;TZID=Europe/Amsterdam:${dtStamp}\r\n`;
+                ics += `SUMMARY:Injectie ${name} (${dose} mg)\r\n`;
+                ics += `DESCRIPTION:Schema herinnering. Dosis: ${dose} mg\\nDatum: ${d.toLocaleDateString('nl-NL', {weekday:'long', day:'numeric', month:'long', year:'numeric'})}\r\n`;
+                ics += `STATUS:CONFIRMED\r\nEND:VEVENT\r\n`;
+            }
             ics += `END:VCALENDAR`;
 
             const blob = new Blob([ics], { type: 'text/calendar' });
             const link = document.createElement('a');
             link.href = window.URL.createObjectURL(blob);
-            link.download = `${name}.ics`;
-            link.click();
+            link.download = `${name.replace(/\s/g,'_')}_schema.ics`;
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
 
+        // ========== WEIGHT TRACKER LOGICA (NIEUW) ==========
+        function getWeightLogs() {
+            try { return JSON.parse(localStorage.getItem('peptide_weight_logs') || '[]'); } 
+            catch(e) { return []; }
+        }
+
+        function logWeight() {
+            const val = parseFloat(document.getElementById('weight-input').value);
+            if(!val || val <= 0 || val > 300) { alert("Voer een geldig gewicht in (kg)."); return; }
+            
+            const logs = getWeightLogs();
+            const now = new Date();
+            logs.unshift({ // Voeg toe aan begin (nieuwste eerst)
+                date: now.toLocaleDateString('nl-NL', { day:'numeric', month:'short', year:'numeric' }),
+                time: now.toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit' }),
+                weight: val,
+                timestamp: now.getTime()
+            });
+            
+            // Beperk tot 100 entries voor performance
+            if(logs.length > 100) logs.pop();
+            localStorage.setItem('peptide_weight_logs', JSON.stringify(logs));
+            document.getElementById('weight-input').value = '';
+            renderWeightTracker();
+        }
+
+        function renderWeightTracker() {
+            const logs = getWeightLogs();
+            const listEl = document.getElementById('weight-log-list');
+            const trendBadge = document.getElementById('trend-indicator');
+            
+            // Clear list
+            listEl.innerHTML = '';
+            if(logs.length === 0) {
+                listEl.innerHTML = `<p class="text-xs text-dark-500 text-center py-4">Nog geen metingen. Log je eerste gewicht hierboven.</p>`;
+                trendBadge.classList.add('hidden');
+                drawChart([]);
+                return;
+            }
+
+            // Render list
+            logs.slice(0, 20).forEach((log, i) => {
+                let diff = null;
+                if(i > 0) diff = log.weight - logs[i-1].weight;
+                
+                const cls = diff === null ? '' : (diff < 0 ? 'negative' : (diff > 0 ? 'positive' : ''));
+                const diffText = diff === null ? '-' : `${diff > 0 ? '+' : ''}${diff.toFixed(2)} kg`;
+                
+                listEl.innerHTML += `
+                    <div class="log-item ${cls}">
+                        <div>
+                            <p class="text-xs font-semibold text-white">${log.date}</p>
+                            <p class="text-[10px] text-dark-400">${log.time}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm font-bold text-accent-light">${log.weight.toFixed(2)} kg</p>
+                            <p class="text-[10px] ${diff > 0 ? 'text-danger' : (diff < 0 ? 'text-success' : 'text-dark-400')}">${diffText}</p>
+                        </div>
+                    </div>`;
+            });
+
+            // Trend calculation
+            if(logs.length >= 2) {
+                const first = logs[logs.length - 1].weight;
+                const last = logs[0].weight;
+                const totalDiff = last - first;
+                const daysPassed = Math.max(1, (new Date().getTime() - new Date(first).getTime()) / (24*60*60*1000));
+                // Simple trend indicator based on last 3 entries avg vs previous 3
+                let recentAvg = logs.slice(0, 3).reduce((a,b)=>a+b.weight,0) / Math.min(logs.length,3);
+                let prevAvg = logs.slice(Math.max(1,Math.min(4,logs.length)), Math.max(4,Math.min(7,logs.length))).reduce((a,b)=>a+b.weight,0) / 3;
+                
+                const isUp = recentAvg > prevAvg + 0.2;
+                const isDown = recentAvg < prevAvg - 0.2;
+                
+                trendBadge.classList.remove('hidden', 'badge-purple');
+                if(isDown) { trendBadge.textContent = `↓ Neerwaartse Trend`; trendBadge.className = 'badge badge-green'; }
+                else if(isUp) { trendBadge.textContent = `↑ Opwaartse Trend`; trendBadge.className = 'badge bg-danger/20 text-danger'; }
+                else { trendBadge.textContent = `→ Stabilisatie`; trendBadge.className = 'badge badge-purple'; }
+            }
+
+            drawChart(logs.slice().reverse()); // Oude naar nieuw voor grafiek
+        }
+
+        function drawChart(data) {
+            const svg = document.getElementById('weight-chart');
+            if(data.length < 2) {
+                svg.innerHTML = `<text x="150" y="100" text-anchor="middle" class="chart-label">Minimaal 2 metingen nodig voor grafiek</text>`;
+                return;
+            }
+
+            const weights = data.map(d => d.weight);
+            const minW = Math.min(...weights) - 1;
+            const maxW = Math.max(...weights) + 1;
+            const range = maxW - minW || 2;
+            
+            const w = 300, h = 180, padding = 20;
+            const stepX = (w - padding*2) / (data.length - 1);
+            
+            let points = [];
+            data.forEach((d, i) => {
+                const x = padding + i * stepX;
+                const y = h - padding - ((d.weight - minW) / range) * (h - padding*2);
+                points.push(`${x},${y}`);
+            });
+
+            let svgContent = `
+                <defs>
+                    <linearGradient id="trendGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#6C63FF" stop-opacity="0.4"/>
+                        <stop offset="100%" stop-color="#6C63FF" stop-opacity="0"/>
+                    </linearGradient>
+                </defs>
+                <!-- Grid -->
+                <line x1="${padding}" y1="${h-padding}" x2="${w-padding}" y2="${h-padding}" class="chart-grid" stroke-width="1"/>
+                <text x="5" y="${h-padding+4}" class="chart-label">${minW.toFixed(1)}</text>
+                <text x="5" y="${padding+4}" class="chart-label">${maxW.toFixed(1)}</text>
+
+                <!-- Area fill -->
+                <polygon points="${points.join(' ')} ${w-padding},${h-padding} ${padding},${h-padding}" fill="url(#trendGrad)" />
+                
+                <!-- Line -->
+                <polyline points="${points.join(' ')}" class="trend-line" />
+            `;
+
+            // Points & Labels
+            points.forEach((p, i) => {
+                const [x,y] = p.split(',');
+                svgContent += `<circle cx="${x}" cy="${y}" class="trend-point" />`;
+                if(data.length <= 15 || i % Math.ceil(data.length/8) === 0) {
+                    svgContent += `<text x="${x}" y="${h-padding+14}" text-anchor="middle" class="chart-label">${data[i].date.split(' ')[0]}/${data[i].date.split(' ')[1]}</text>`;
+                }
+            });
+
+            svg.innerHTML = svgContent;
+        }
+
+        function generateWeightTableText() {
+            const logs = getWeightLogs().reverse(); // Oud naar nieuw voor export
+            let txt = "DATUM\tTIJD\tGEWICHT (KG)\n";
+            logs.forEach(l => {
+                txt += `${l.date}\t${l.time}\t${l.weight.toFixed(2)}\n`;
+            });
+            return txt;
+        }
+
+        function copyWeightTable() {
+            const txt = generateWeightTableText();
+            navigator.clipboard.writeText(txt).then(() => alert("Tabel gekopieerd! Plak in Apple Notes of Excel."));
+        }
+
+        function downloadWeightTxt() {
+            const txt = "PEPTIDE GEWICHTSTRACKER LOG\n" + generateWeightTableText();
+            const blob = new Blob([txt], { type: 'text/plain' });
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = `gewicht_log_${new Date().toISOString().split('T')[0]}.txt`;
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        }
+
+        // Init
+        renderWeightTracker();
     </script>
 </body>
 </html>
